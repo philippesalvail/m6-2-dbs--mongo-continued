@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const { getSeats } = require("./handlers");
 
 const NUM_OF_ROWS = 8;
 const SEATS_PER_ROW = 12;
@@ -15,6 +16,7 @@ for (let r = 0; r < row.length; r++) {
     };
   }
 }
+
 // ----------------------------------
 //////// HELPERS
 const getRowName = (rowIndex) => {
@@ -40,20 +42,7 @@ const randomlyBookSeats = (num) => {
 
 let state;
 
-router.get("/api/seat-availability", async (req, res) => {
-  if (!state) {
-    state = {
-      bookedSeats: randomlyBookSeats(30),
-    };
-  }
-
-  return res.json({
-    seats: seats,
-    bookedSeats: state.bookedSeats,
-    numOfRows: 8,
-    seatsPerRow: 12,
-  });
-});
+router.get("/api/seat-availability", getSeats);
 
 let lastBookingAttemptSucceeded = false;
 
