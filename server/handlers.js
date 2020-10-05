@@ -1,6 +1,7 @@
 "use strict";
 
 const { MongoClient } = require("mongodb");
+const assert = require("assert");
 require("dotenv").config();
 
 const { MONGO_URI } = process.env;
@@ -12,14 +13,12 @@ const options = {
 };
 
 const getSeats = async (req, res) => {
+  console.log("req: ", req.query);
   try {
     const client = await MongoClient(MONGO_URI, options);
     await client.connect();
     const database = client.db("exercise_2");
-    const data = await database
-      .collection("seats")
-      .find({ isBooked: false })
-      .toArray();
+    const data = await database.collection("seats").find().toArray();
     console.log("data: ", data);
     let seats = {};
     for (let s = 0; s < data.length; s++) {
@@ -28,6 +27,7 @@ const getSeats = async (req, res) => {
         isBooked: data[s].isBooked,
       };
     }
+
     res.status(200).send({
       seats: seats,
       numOfRows: 8,
@@ -40,20 +40,38 @@ const getSeats = async (req, res) => {
   }
 };
 const bookSeat = async (req, res) => {
-  const bookId = req.query._id;
+  const { seatId, creditCard, expiration, email, fullName } = req.body;
+
   try {
     const client = await MongoClient(MONGO_URI, options);
     await client.connect();
     const database = client.db("exercise_2");
-    const data = await database
+    let seatSelected = await database
       .collection("seats")
-      .updateOne({ _id: bookId }, { $set: { isBooked: true } });
-    assert.equal(1, data.matchedCount);
-    assert.equal(1, data.modifiedCount);
-    res.status(200).json({ status: 200, _id: bookId, isBooked: true });
+      .findOne({ _id: seatId });
+    if (seatSelected.isBooked) {
+      return res.status(400).json({
+        message: "This seat has already been booked!",
+      });
+    }
+    if (!creditCard || !expiration || !email || !fullName) {
+      return res.status(400).json({
+        status: 400,
+        message: "Please provide credit card information!",
+      });
+    }
+    seatSelected = await database
+      .collection("seats")
+      .updateOne({ _id: seatId }, { $set: { isBooked: true } });
+    assert.equal(1, seatSelected.matchedCount);
+    assert.equal(1, seatSelected.modifiedCount);
+    res.status(200).json({
+      status: 200,
+      success: true,
+    });
     client.close();
   } catch (error) {
-    res.status(404).json({ status: 404, _id: bookId, message: error.message });
+    res.status(404).json({ status: 404, _id: seatId, message: error.message });
   }
 };
 module.exports = { getSeats, bookSeat };
