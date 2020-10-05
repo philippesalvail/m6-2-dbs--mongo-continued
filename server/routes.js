@@ -1,5 +1,10 @@
 const router = require("express").Router();
-const { getSeats, bookSeat } = require("./handlers");
+const {
+  getSeats,
+  bookSeat,
+  updateCustomerInfo,
+  updateReseravation,
+} = require("./handlers");
 
 const NUM_OF_ROWS = 8;
 const SEATS_PER_ROW = 12;
@@ -47,5 +52,9 @@ router.get("/api/seat-availability", getSeats);
 let lastBookingAttemptSucceeded = false;
 
 router.post("/api/book-seat", bookSeat);
+
+router.put("/api/updateCustomerInfo", updateCustomerInfo);
+
+router.put("/api/updateReservation", updateReseravation);
 
 module.exports = router;

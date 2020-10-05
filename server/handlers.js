@@ -77,4 +77,68 @@ const bookSeat = async (req, res) => {
     res.status(404).json({ status: 404, _id: seatId, message: error.message });
   }
 };
-module.exports = { getSeats, bookSeat };
+
+const updateCustomerInfo = async (req, res) => {
+  const { seatId, clientName, clientEmail } = req.body;
+
+  try {
+    const client = await MongoClient(MONGO_URI, options);
+    await client.connect();
+    const database = client.db("exercise_2");
+    let seatSelected = await database
+      .collection("seats")
+      .findOne({ _id: seatId });
+    if (!seatSelected.isBooked) {
+      return res.status(404).json({ message: "Seat was never reserved" });
+    }
+    if (seatSelected.clientEmail || seatSelected.clientName) {
+      seatSelected = await database
+        .collection("seats")
+        .updateOne(
+          { _id: seatId },
+          { $set: { clientName: clientName, clientEmail: clientEmail } }
+        );
+      return res.status(200).json({
+        message: "Client Information has been updated",
+      });
+    }
+
+    assert.equal(1, seatSelected.matchedCount);
+    assert.equal(1, seatSelected.modifiedCount);
+    res.status(200).json({
+      status: 200,
+      success: true,
+    });
+    client.close();
+  } catch (error) {
+    res.status(404).json({ status: 404, _id: seatId, message: error.message });
+  }
+};
+
+const updateReseravation = async (req, res) => {
+  const { seatId } = req.body;
+
+  try {
+    const client = await MongoClient(MONGO_URI, options);
+    await client.connect();
+    const database = client.db("exercise_2");
+    let seatSelected = await database
+      .collection("seats")
+      .findOne({ _id: seatId });
+    if (!seatSelected.isBooked) {
+      return res.status(404).json({ message: "Seat was never reserved" });
+    }
+    seatSelected = await database
+      .collection("seats")
+      .updateOne({ _id: seatId }, { $set: { isBooked: false } });
+    assert.equal(1, seatSelected.matchedCount);
+    assert.equal(1, seatSelected.modifiedCount);
+    res.status(200).json({
+      message: `Seat ${seatId} has been unreserved`,
+    });
+    client.close();
+  } catch (error) {
+    res.status(404).json({ status: 404, _id: seatId, message: error.message });
+  }
+};
+module.exports = { getSeats, bookSeat, updateCustomerInfo, updateReseravation };
