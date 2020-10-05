@@ -62,7 +62,10 @@ const bookSeat = async (req, res) => {
     }
     seatSelected = await database
       .collection("seats")
-      .updateOne({ _id: seatId }, { $set: { isBooked: true } });
+      .updateOne(
+        { _id: seatId },
+        { $set: { isBooked: true, clientName: fullName, clientEmail: email } }
+      );
     assert.equal(1, seatSelected.matchedCount);
     assert.equal(1, seatSelected.modifiedCount);
     res.status(200).json({
